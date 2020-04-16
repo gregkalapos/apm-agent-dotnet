@@ -14,6 +14,7 @@ pipeline {
     GITHUB_CHECK_ITS_NAME = 'Integration Tests'
     ITS_PIPELINE = 'apm-integration-tests-selector-mbp/master'
     OPBEANS_REPO = 'opbeans-dotnet'
+    DOCKER_ELASTIC_SECRET = 'secret/apm-team/ci/docker-registry/prod'
   }
   options {
     timeout(time: 1, unit: 'HOURS')
@@ -45,6 +46,12 @@ pipeline {
               dir("${BASE_DIR}"){
                 // Skip all the stages except docs for PR's with asciidoc and md changes only
                 env.ONLY_DOCS = isGitRegionMatch(patterns: [ '.*\\.(asciidoc|md)' ], shouldMatchAll: true)
+
+                 // Look for changes related to the benchmark, if so then set the env variable.
+                def patternList = [
+                  '^test/Elastic.Apm.PerfTests/.*'
+                ]
+                env.BENCHMARK_UPDATED = isGitRegionMatch(patterns: patternList)
               }
             }
           }
@@ -341,6 +348,48 @@ pipeline {
                                     string(name: 'GITHUB_CHECK_REPO', value: env.REPO),
                                     string(name: 'GITHUB_CHECK_SHA1', value: env.GIT_BASE_COMMIT)])
                 githubNotify(context: "${env.GITHUB_CHECK_ITS_NAME}", description: "${env.GITHUB_CHECK_ITS_NAME} ...", status: 'PENDING', targetUrl: "${env.JENKINS_URL}search/?q=${env.ITS_PIPELINE.replaceAll('/','+')}")
+              }
+            }
+            stage('Benchmarks') {
+              agent { label 'metal' }
+              environment {
+                REPORT_FILE = 'apm-agent-benchmark-results.json'
+              }
+              when {
+                beforeAgent true
+                allOf {
+                  anyOf {
+                    branch 'master'
+                    tag pattern: 'v\\d+\\.\\d+\\.\\d+.*', comparator: 'REGEXP'
+                    expression { return params.Run_As_Master_Branch }
+                    expression { return env.BENCHMARK_UPDATED != "false" }
+                  }
+                  expression { return env.ONLY_DOCS == "false" }
+                }
+              }
+              steps {
+                withGithubNotify(context: 'Benchmarks') {
+                  deleteDir()
+                  unstash 'source'
+                  unstash 'cache'
+                  dockerLogin(secret: "${DOCKER_ELASTIC_SECRET}", registry: 'docker.elastic.co')
+                  dir("${BASE_DIR}") {
+                    sh 'echo TBD'
+                  }
+                }
+              }
+              post {
+                always {
+                  catchError(message: 'sendBenchmarks failed', buildResult: 'FAILURE') {
+                    log(level: 'INFO', text: "sendBenchmarks is ${env.CHANGE_ID?.trim() ? 'not enabled for PRs' : 'enabled for branches'}")
+                    whenTrue(env.CHANGE_ID == null){
+                      sendBenchmarks(file: "${BASE_DIR}/${env.REPORT_FILE}", index: 'benchmark-dotnet')
+                    }
+                  }
+                  catchError(message: 'deleteDir failed', buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    deleteDir()
+                  }
+                }
               }
             }
           }
