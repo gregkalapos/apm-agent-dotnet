@@ -14,7 +14,7 @@ pipeline {
     GITHUB_CHECK_ITS_NAME = 'Integration Tests'
     ITS_PIPELINE = 'apm-integration-tests-selector-mbp/master'
     OPBEANS_REPO = 'opbeans-dotnet'
-    DOCKER_ELASTIC_SECRET = 'secret/apm-team/ci/docker-registry/prod'
+    BENCHMARK_SECRET  = 'secret/apm-team/ci/benchmark-cloud'
   }
   options {
     timeout(time: 1, unit: 'HOURS')
@@ -362,7 +362,9 @@ pipeline {
                     branch 'master'
                     tag pattern: 'v\\d+\\.\\d+\\.\\d+.*', comparator: 'REGEXP'
                     expression { return params.Run_As_Master_Branch }
-                    expression { return env.BENCHMARK_UPDATED != "false" }
+                    // TODO: It's required to configure the benchmark for dotnet to be dryRun
+                    // or prepare an ES where to send the data to
+                    // expression { return env.BENCHMARK_UPDATED != "false" }
                   }
                   expression { return env.ONLY_DOCS == "false" }
                 }
@@ -371,21 +373,16 @@ pipeline {
                 withGithubNotify(context: 'Benchmarks') {
                   deleteDir()
                   unstash 'source'
-                  unstash 'cache'
-                  dockerLogin(secret: "${DOCKER_ELASTIC_SECRET}", registry: 'docker.elastic.co')
                   dir("${BASE_DIR}") {
-                    sh 'echo TBD'
+                    sendBenchmarks.prepareAndRun(secret: env.BENCHMARK_SECRET, url_var: 'ES_URL',
+                                                 user_var: 'ES_USER', pass_var: 'ES_PASS') {
+                      sh '.ci/linux/benchmark.sh'
+                    }
                   }
                 }
               }
               post {
                 always {
-                  catchError(message: 'sendBenchmarks failed', buildResult: 'FAILURE') {
-                    log(level: 'INFO', text: "sendBenchmarks is ${env.CHANGE_ID?.trim() ? 'not enabled for PRs' : 'enabled for branches'}")
-                    whenTrue(env.CHANGE_ID == null){
-                      sendBenchmarks(file: "${BASE_DIR}/${env.REPORT_FILE}", index: 'benchmark-dotnet')
-                    }
-                  }
                   catchError(message: 'deleteDir failed', buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     deleteDir()
                   }
