@@ -351,7 +351,9 @@ pipeline {
               }
             }
             stage('Benchmarks') {
-              agent { label 'metal' }
+              // agent { label 'metal' }
+              // TODO: tools are only installed in this worker for now
+              agent { label 'worker-854309' }
               environment {
                 REPORT_FILE = 'apm-agent-benchmark-results.json'
               }

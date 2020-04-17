@@ -4,4 +4,5 @@
 #
 set -euxo pipefail
 
-echo 'TBD'
+cd ./test/Elastic.Apm.PerfTests
+dotnet run -c Release --filter AspNetCoreLoadTestWithAgent AspNetCoreLoadTestWithoutAgent
