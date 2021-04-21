@@ -4,6 +4,8 @@
 // See the LICENSE file in the project root for more information
 
 using Elastic.Apm.AspNetCore.DiagnosticListener;
+using Elastic.Apm.Azure.ServiceBus;
+using Elastic.Apm.Azure.Storage;
 using Elastic.Apm.DiagnosticSource;
 using Elastic.Apm.Elasticsearch;
 using Elastic.Apm.EntityFrameworkCore;
@@ -17,15 +19,31 @@ namespace Elastic.Apm.NetCoreAll
 	public static class HostBuilderExtensions
 	{
 		/// <summary>
-		/// Register Elastic APM .NET Agent with components in the container and enables <see cref="HttpDiagnosticsSubscriber" />,
-		/// <see cref="EfCoreDiagnosticsSubscriber" />, and <see cref="SqlClientDiagnosticSubscriber"/>.
+		/// Register Elastic APM .NET Agent with components in the container and enables
+		/// <see cref="HttpDiagnosticsSubscriber" />,
+		/// <see cref="AspNetCoreDiagnosticSubscriber" />,
+		/// <see cref="EfCoreDiagnosticsSubscriber" />,
+		/// <see cref="SqlClientDiagnosticSubscriber"/>,
+		/// <see cref="ElasticsearchDiagnosticsSubscriber"/>.
+		/// <see cref="GrpcClientDiagnosticSubscriber"/>,
+		/// <see cref="AzureMessagingServiceBusDiagnosticsSubscriber"/>,
+		/// <see cref="MicrosoftAzureServiceBusDiagnosticsSubscriber"/>,
+		/// <see cref="AzureBlobStorageDiagnosticsSubscriber"/>,
+		/// <see cref="AzureQueueStorageDiagnosticsSubscriber"/>,
+		/// and <see cref="AzureFileShareStorageDiagnosticsSubscriber"/>.
 		/// </summary>
 		/// <param name="builder">Builder.</param>
-		public static IHostBuilder UseAllElasticApm(this IHostBuilder builder) => builder.UseElasticApm(new HttpDiagnosticsSubscriber(),
+		public static IHostBuilder UseAllElasticApm(this IHostBuilder builder) => builder.UseElasticApm(
+			new HttpDiagnosticsSubscriber(),
 			new AspNetCoreDiagnosticSubscriber(),
 			new EfCoreDiagnosticsSubscriber(),
 			new SqlClientDiagnosticSubscriber(),
 			new ElasticsearchDiagnosticsSubscriber(),
-			new GrpcClientDiagnosticSubscriber());
+			new GrpcClientDiagnosticSubscriber(),
+			new AzureMessagingServiceBusDiagnosticsSubscriber(),
+			new MicrosoftAzureServiceBusDiagnosticsSubscriber(),
+			new AzureBlobStorageDiagnosticsSubscriber(),
+			new AzureQueueStorageDiagnosticsSubscriber(),
+			new AzureFileShareStorageDiagnosticsSubscriber());
 	}
 }
