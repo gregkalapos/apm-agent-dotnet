@@ -2,12 +2,12 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using System.Collections.Generic;
+using Elastic.Apm.Api;
+using Elastic.Apm.Logging;
+
 namespace Elastic.Apm.DiagnosticListeners.Parsers
 {
-	using System.Collections.Generic;
-	using Elastic.Apm.Api;
-	using Elastic.Apm.Logging;
-
 	/// <summary>
 	/// HTTP Dependency parser that attempts to parse dependency as Azure DocumentDB call.
 	/// </summary>
@@ -112,16 +112,11 @@ namespace Elastic.Apm.DiagnosticListeners.Parsers
 		/// <returns>A span populated with CosmosDB info if successfully parsed the URL, <code>null</code> otherwise</returns>
 		internal static ISpan TryCreateCosmosDbSpan(string host, string pathAndQuery, string verb, ITracer tracer, IApmLogger logger)
 		{
-
-			if (host == null )
-			{
+			if (host is null )
 				return null;
-			}
 
 			if (!HttpParsingHelper.EndsWithAny(host, DocumentDbHostSuffixes))
-			{
 				return null;
-			}
 
 			////
 			//// DocumentDB REST API: https://docs.microsoft.com/en-us/rest/api/documentdb/
@@ -130,33 +125,25 @@ namespace Elastic.Apm.DiagnosticListeners.Parsers
 			logger.Debug()?.Log("Host of the HTTP Request matches Cosmos DB - start parsing URL");
 
 			var resourcePath = HttpParsingHelper.ParseResourcePath(pathAndQuery);
-		
 			var operation = HttpParsingHelper.BuildOperationMoniker(verb, resourcePath);
 			var operationName = GetOperationName(null, operation);
 
 			var spanName = "Cosmos DB" + (operationName.Length > 4 ? (" " + operationName) : string.Empty);
-			var span = tracer.CurrentTransaction?.StartSpan(spanName, ApiConstants.TypeDb, "CosmosDb");
+			var span = tracer.CurrentTransaction?.StartSpan(spanName, ApiConstants.TypeDb, ApiConstants.SubTypeCosmosDb);
 
 			if (span != null)
 			{
-				span.Type = ApiConstants.TypeDb;
-				span.Subtype = ApiConstants.SubTypeCosmosDb;
 				span.Context.Db = new Database();
-
 				foreach (var resource in resourcePath)
 				{
 					if (resource.Value != null)
 					{
 						if (resource.Key == "dbs")
-						{
 							span.Context.Db.Instance = resource.Value;
-						}
 
 						var propertyName = GetPropertyNameForResource(resource.Key);
-
 						if (!string.IsNullOrEmpty(propertyName))
 							span.Name += $" {resource.Value}";
-
 					}
 				}
 			}
@@ -184,14 +171,7 @@ namespace Elastic.Apm.DiagnosticListeners.Parsers
 			}
 		}
 
-		private static string GetOperationName(string resultCode, string operation)
-		{
-			if (!OperationNames.TryGetValue(operation, out var operationName))
-			{
-				return operation;
-			}
-
-			return operationName;
-		}
+		private static string GetOperationName(string resultCode, string operation) =>
+			OperationNames.TryGetValue(operation, out var operationName) ? operationName : operation;
 	}
 }

@@ -21,7 +21,7 @@ namespace Elastic.Apm.Tests.Utilities.Terraform
 	/// </summary>
 	public class TerraformResources
 	{
-		private static readonly TimeSpan _defaultTimeout = TimeSpan.FromMinutes(10);
+		private static readonly TimeSpan _defaultTimeout = TimeSpan.FromMinutes(20);
 
 		private readonly string _resourceDirectory;
 		private readonly IMessageSink _messageSink;
@@ -44,7 +44,7 @@ namespace Elastic.Apm.Tests.Utilities.Terraform
 		{
 			var startArguments = new StartArguments("terraform", arguments)
 			{
-				WorkingDirectory = _resourceDirectory
+				WorkingDirectory = _resourceDirectory,
 			};
 			_credentials.AddToArguments(startArguments);
 

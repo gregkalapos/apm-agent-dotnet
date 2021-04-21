@@ -137,7 +137,7 @@ namespace Elastic.Apm.DiagnosticListeners
 				ApiConstants.TypeExternal, ApiConstants.SubtypeHttp, InstrumentationFlag.HttpClient, true);
 
 			var cosmosDbSpan = DocumentDbHttpParser.TryCreateCosmosDbSpan(requestUrl.Host,
-				requestUrl.PathAndQuery, RequestGetMethod(request), Agent.Tracer, Logger);
+				requestUrl.PathAndQuery, RequestGetMethod(request), ApmAgent.Tracer, Logger);
 
 			if (cosmosDbSpan != null)
 			{

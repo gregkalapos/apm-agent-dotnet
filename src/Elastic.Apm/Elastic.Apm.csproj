@@ -48,6 +48,7 @@
     <InternalsVisibleTo Include="Elastic.Apm.Azure.ServiceBus.Tests" Key="$(ExposedPublicKey)" />
     <InternalsVisibleTo Include="Elastic.Apm.Azure.Storage" Key="$(ExposedPublicKey)" />
     <InternalsVisibleTo Include="Elastic.Apm.Azure.Storage.Tests" Key="$(ExposedPublicKey)" />
+    <InternalsVisibleTo Include="Elastic.Apm.Azure.CosmosDb.Tests" Key="$(ExposedPublicKey)" />
   </ItemGroup>
   <ItemGroup Condition="'$(DiagnosticSourceVersion)' == ''">
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="5.0.0" />
