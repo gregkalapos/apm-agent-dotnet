@@ -22,7 +22,7 @@ namespace Elastic.Apm.Azure.CosmosDb.Tests
 
 	/// <summary>
 	/// A test environment for Azure CosmosDb that deploys and configures an Azure CosmosDb account
-	/// in a given region and location, along with a Sql database and container
+	/// in a given region and location
 	/// </summary>
 	/// <remarks>
 	/// Resource name rules
@@ -57,20 +57,13 @@ namespace Elastic.Apm.Azure.CosmosDb.Tests
 
 			_terraform.Init();
 			_terraform.Apply(_variables);
-
 			Endpoint = _terraform.Output("endpoint");
 			PrimaryMasterKey = _terraform.Output("primary_master_key");
-			Database = _terraform.Output("database");
-			Container = _terraform.Output("container");
 		}
 
 		public string Endpoint { get; }
 
 		public string PrimaryMasterKey { get; }
-
-		public string Database { get; }
-
-		public string Container { get; }
 
 		public void Dispose() => _terraform?.Destroy(_variables);
 	}
