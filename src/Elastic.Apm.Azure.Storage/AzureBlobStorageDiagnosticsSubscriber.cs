@@ -10,7 +10,7 @@ using Elastic.Apm.DiagnosticSource;
 namespace Elastic.Apm.Azure.Storage
 {
 	/// <summary>
-	/// Subscribes to diagnostic source events from Azure.Storage.Blobs
+	/// Subscribes to diagnostic source events from Azure.Storage.Blobs and Microsoft.Azure.Storage.Blob
 	/// </summary>
 	public class AzureBlobStorageDiagnosticsSubscriber : IDiagnosticsSubscriber
 	{
@@ -21,12 +21,20 @@ namespace Elastic.Apm.Azure.Storage
 		{
 			var retVal = new CompositeDisposable();
 
-			var initializer = new DiagnosticInitializer(agent.Logger, new[] { new AzureBlobStorageDiagnosticListener(agent) });
+			var initializer = new DiagnosticInitializer(agent.Logger, new AzureBlobStorageDiagnosticListener(agent));
 			retVal.Add(initializer);
 
 			retVal.Add(DiagnosticListener
 				.AllListeners
 				.Subscribe(initializer));
+
+			if (agent is ApmAgent realAgent)
+			{
+				realAgent.HttpTraceConfiguration.AddTracer(new MicrosoftAzureBlobStorageTracer());
+
+				if (!realAgent.HttpTraceConfiguration.Subscribed)
+					realAgent.Subscribe(new HttpDiagnosticsSubscriber(false));
+			}
 
 			return retVal;
 		}
