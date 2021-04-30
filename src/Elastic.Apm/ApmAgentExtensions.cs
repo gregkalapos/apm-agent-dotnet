@@ -47,6 +47,15 @@ namespace Elastic.Apm
 
 	}
 
+	internal class EmptyDisposable : IDisposable
+	{
+		private EmptyDisposable() { }
+
+		public static EmptyDisposable Instance = new EmptyDisposable();
+
+		public void Dispose() { }
+	}
+
 	/// <summary>
 	/// A collection of <see cref="IDisposable"/> instances
 	/// </summary>

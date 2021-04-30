@@ -8,7 +8,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using Elastic.Apm.Api;
-using Elastic.Apm.DiagnosticListeners.Parsers;
 using Elastic.Apm.DiagnosticSource;
 using Elastic.Apm.DistributedTracing;
 using Elastic.Apm.Logging;
@@ -174,22 +173,6 @@ namespace Elastic.Apm.DiagnosticListeners
 					span = ExecutionSegmentCommon.StartSpanOnCurrentExecutionSegment(ApmAgent, $"{method} {requestUrl.Host}",
 				ApiConstants.TypeExternal, ApiConstants.SubtypeHttp, InstrumentationFlag.HttpClient, true);
 
-			var cosmosDbSpan = DocumentDbHttpParser.TryCreateCosmosDbSpan(requestUrl.Host,
-				requestUrl.PathAndQuery, RequestGetMethod(request), ApmAgent.Tracer, Logger);
-
-			if (cosmosDbSpan != null)
-			{
-				if (!ProcessingRequests.TryAdd(request, cosmosDbSpan))
-				{
-					// Consider improving error reporting - see https://github.com/elastic/apm-agent-dotnet/issues/280
-					Logger.Error()?.Log("Failed to add Cosmos Db span to ProcessingRequests");
-					return;
-				}
-
-				Logger.Trace()?.Log("Added Cosmos Db span to ProcessingRequests, span: {span}", cosmosDbSpan);
-				return;
-			}
-
 					if (span is null)
 					{
 						Logger.Trace()?.Log("Could not create span for outgoing HTTP request to {RequestUrl}", Http.Sanitize(requestUrl));
@@ -262,13 +245,6 @@ namespace Elastic.Apm.DiagnosticListeners
 							"Request: method: {HttpMethod}, URL: {RequestUrl}", RequestGetMethod(request), Http.Sanitize(requestUrl));
 				}
 
-				return;
-			}
-
-			if (span.Context.Db != null)
-			{
-				Logger.Trace()?.Log("Cosmos DB span removed from ProcessingRequests, ready to call .End on it, span: {span}", span);
-				span.End();
 				return;
 			}
 

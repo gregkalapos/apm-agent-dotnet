@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using Elastic.Apm.Azure.CosmosDb;
 using Elastic.Apm.Azure.ServiceBus;
 using Elastic.Apm.Azure.Storage;
 using Elastic.Apm.DiagnosticSource;
@@ -28,7 +29,9 @@ namespace Elastic.Apm.NetCoreAll
 		/// <see cref="MicrosoftAzureServiceBusDiagnosticsSubscriber"/>,
 		/// <see cref="AzureBlobStorageDiagnosticsSubscriber"/>,
 		/// <see cref="AzureQueueStorageDiagnosticsSubscriber"/>,
-		/// and <see cref="AzureFileShareStorageDiagnosticsSubscriber"/>.
+		/// <see cref="AzureFileShareStorageDiagnosticsSubscriber"/>,
+		/// <see cref="AzureCosmosDbDiagnosticsSubscriber"/>.
+		/// and <see cref="MongoDbDiagnosticsSubscriber"/>.
 		/// This method turns on ASP.NET Core monitoring with every other related monitoring components, for example the agent
 		/// will also automatically trace outgoing HTTP requests and database statements.
 		/// </summary>
@@ -54,6 +57,7 @@ namespace Elastic.Apm.NetCoreAll
 				new AzureBlobStorageDiagnosticsSubscriber(),
 				new AzureQueueStorageDiagnosticsSubscriber(),
 				new AzureFileShareStorageDiagnosticsSubscriber(),
+				new AzureCosmosDbDiagnosticsSubscriber(),
 				new MongoDbDiagnosticsSubscriber());
 	}
 }

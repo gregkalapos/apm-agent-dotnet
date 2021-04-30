@@ -28,7 +28,7 @@ namespace Elastic.Apm.Azure.CosmosDb.Tests
 			var logger = new XUnitLogger(LogLevel.Trace, output);
 			_sender = new MockPayloadSender(logger);
 			_agent = new ApmAgent(new TestAgentComponents(logger: logger, payloadSender: _sender));
-			_agent.Subscribe(new HttpDiagnosticsSubscriber());
+			_agent.Subscribe(new AzureCosmosDbDiagnosticsSubscriber());
 			_client = new DocumentClient(new Uri(environment.Endpoint), environment.PrimaryMasterKey);
 		}
 

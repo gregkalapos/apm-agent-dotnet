@@ -4,6 +4,7 @@
 // See the LICENSE file in the project root for more information
 
 using Elastic.Apm.AspNetCore.DiagnosticListener;
+using Elastic.Apm.Azure.CosmosDb;
 using Elastic.Apm.Azure.ServiceBus;
 using Elastic.Apm.Azure.Storage;
 using Elastic.Apm.DiagnosticSource;
@@ -22,7 +23,6 @@ namespace Elastic.Apm.NetCoreAll
 		/// <summary>
 		/// Register Elastic APM .NET Agent with components in the container and enables
 		/// <see cref="HttpDiagnosticsSubscriber" />,
-		/// <see cref="AspNetCoreDiagnosticSubscriber" />,
 		/// <see cref="EfCoreDiagnosticsSubscriber" />,
 		/// <see cref="SqlClientDiagnosticSubscriber"/>,
 		/// <see cref="ElasticsearchDiagnosticsSubscriber"/>.
@@ -31,7 +31,9 @@ namespace Elastic.Apm.NetCoreAll
 		/// <see cref="MicrosoftAzureServiceBusDiagnosticsSubscriber"/>,
 		/// <see cref="AzureBlobStorageDiagnosticsSubscriber"/>,
 		/// <see cref="AzureQueueStorageDiagnosticsSubscriber"/>,
-		/// and <see cref="AzureFileShareStorageDiagnosticsSubscriber"/>.
+		/// <see cref="AzureFileShareStorageDiagnosticsSubscriber"/>,
+		/// <see cref="AzureCosmosDbDiagnosticsSubscriber"/>.
+		/// and <see cref="MongoDbDiagnosticsSubscriber"/>.
 		/// </summary>
 		/// <param name="builder">Builder.</param>
 		public static IHostBuilder UseAllElasticApm(this IHostBuilder builder) => builder.UseElasticApm(
@@ -46,6 +48,7 @@ namespace Elastic.Apm.NetCoreAll
 			new AzureBlobStorageDiagnosticsSubscriber(),
 			new AzureQueueStorageDiagnosticsSubscriber(),
 			new AzureFileShareStorageDiagnosticsSubscriber(),
+			new AzureCosmosDbDiagnosticsSubscriber(),
 			new MongoDbDiagnosticsSubscriber());
 	}
 }
