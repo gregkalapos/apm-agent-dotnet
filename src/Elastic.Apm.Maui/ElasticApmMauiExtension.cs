@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Elastic.Apm.Config;
+using Elastic.Apm.Extensions.Hosting;
+using Elastic.Apm.Extensions.Hosting.Config;
+using Elastic.Apm.Logging;
 //using Microsoft.Extensions.Logging;
 //using Microsoft.Extensions.Options;
 
@@ -18,7 +22,13 @@ namespace Elastic.Apm.Maui
 		public static MauiAppBuilder UseElasticApm(this MauiAppBuilder builder)
 		{
 			var services = builder.Services;
+
+			services.AddSingleton<IApmLogger, NetCoreLogger>();
 			
+			services.AddSingleton<IConfigurationReader>(sp =>
+				new MicrosoftExtensionsConfig(builder.Configuration, sp.GetService<IApmLogger>(), "TODO"));
+
+
 			services.AddSingleton<IMauiInitializeService, ElasticApmInitializer>();
 			services.AddSingleton<MauiEventsBinder>();
 			return builder;

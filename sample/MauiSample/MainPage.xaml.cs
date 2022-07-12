@@ -10,8 +10,8 @@ namespace MauiSample
 		{
 			count++;
 
-			var httpClient = new HttpClient();
-			httpClient.GetAsync("https://elastic.co").Wait();
+			//var httpClient = new HttpClient();
+			//httpClient.GetAsync("https://elastic.co").Wait();
 
 			if (count == 1)
 				CounterBtn.Text = $"Clicked {count} time";
