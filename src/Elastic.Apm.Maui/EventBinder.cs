@@ -43,14 +43,15 @@ namespace Elastic.Apm.Maui
 						break;
 				}
 			};
-#pragma warning restore IDE0022 // Use expression body for methods
+#pragma warning restore IDE0022 // Use expression body for methods]]
 		}
 
 		private void BindButtonEvents(Button button)
 		{
 			button.Pressed += (sender, e) =>
 			{
-				_tracer.StartTransaction($"Button pressed `{(sender as Button).Text}`", "ButtonClick");
+				var transaction = _tracer.StartTransaction($"Button pressed `{(sender as Button).Text}`", "ButtonClick");
+				SetDeviceInfo(transaction);
 			};
 
 			button.Released += (sender, e) =>
@@ -63,10 +64,27 @@ namespace Elastic.Apm.Maui
 #pragma warning disable IDE0022 // Use expression body for methods
 			// Lifecycle events
 			// https://docs.microsoft.com/dotnet/maui/fundamentals/shell/lifecycle
-			page.Appearing += (sender, _) =>
+			page.NavigatedTo += (sender, _) =>
 			{
-				_tracer.StartTransaction("Appearing", "bar").End();
+				var transactionName = "Navigated to";
+				if (sender is ContentPage page)
+				{
+					if(!string.IsNullOrEmpty(page.Title))
+						transactionName += $" {page.Title}";
+					else
+						transactionName += $" {page.GetType().Name}";
+				}
+
+				var transaction = _tracer.StartTransaction(transactionName, "NavigatedTo");
+				SetDeviceInfo(transaction);
+				transaction.End();
 			};
+		}
+
+		private void SetDeviceInfo(ITransaction transaction)
+		{
+			transaction.SetLabel("device.manufacturer", DeviceInfo.Manufacturer);
+			transaction.SetLabel("device.model.name", DeviceInfo.Model);
 		}
 	}
 }

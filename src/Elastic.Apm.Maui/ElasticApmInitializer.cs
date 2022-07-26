@@ -9,6 +9,8 @@ using Elastic.Apm.DiagnosticSource;
 using Elastic.Apm.Helpers;
 using Elastic.Apm.Logging;
 using Elastic.Apm.Maui.PayloadSender;
+using Elastic.Apm.Report;
+using Elastic.Apm.ServerInfo;
 using Microsoft.Extensions.Logging;
 
 namespace Elastic.Apm.Maui
@@ -29,9 +31,12 @@ namespace Elastic.Apm.Maui
 			var configurationStore = new ConfigurationStore(new ConfigurationSnapshotFromReader(configReader, "local"), logger);
 
 
-			var payloadSender = new CachingPayloadSender(logger, configurationStore.CurrentSnapshot,
-				Service.GetDefaultService(configReader, logger),
-				system);
+			//var payloadSender = new CachingPayloadSender(logger, configurationStore.CurrentSnapshot,
+			//	Service.GetDefaultService(configReader, logger),
+			//	system);
+
+			var payloadSender = new PayloadSenderV2(logger, configurationStore.CurrentSnapshot,
+				Service.GetDefaultService(configReader, logger), system, new ApmServerInfo());
 
 			Agent.Setup(new AgentComponents(payloadSender: payloadSender));
 
@@ -39,7 +44,6 @@ namespace Elastic.Apm.Maui
 			// Bind MAUI events
 			var binder = services.GetRequiredService<MauiEventsBinder>();
 			binder.BindEvents();
-
 		}
 	}
 }

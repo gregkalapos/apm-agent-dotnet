@@ -6,12 +6,12 @@ namespace MauiSample
 
 		public MainPage() => InitializeComponent();
 
-		private  void OnCounterClicked(object sender, EventArgs e)
+		private async void OnCounterClicked(object sender, EventArgs e)
 		{
 			count++;
 
-			//var httpClient = new HttpClient();
-			//httpClient.GetAsync("https://elastic.co").Wait();
+			var httpClient = new HttpClient();
+			await httpClient.GetAsync("https://www.elastic.co");
 
 			if (count == 1)
 				CounterBtn.Text = $"Clicked {count} time";
