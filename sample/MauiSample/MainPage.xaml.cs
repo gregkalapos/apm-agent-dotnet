@@ -13,11 +13,7 @@ namespace MauiSample
 			var httpClient = new HttpClient();
 			await httpClient.GetAsync("https://www.elastic.co");
 
-			if (count == 1)
-				CounterBtn.Text = $"Clicked {count} time";
-			else
-				CounterBtn.Text = $"Clicked {count} times";
-
+			CounterBtn.Text = $"Clicked {count} times";
 			SemanticScreenReader.Announce(CounterBtn.Text);
 		}
 	}
