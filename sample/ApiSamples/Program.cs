@@ -5,10 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading;
 using Elastic.Apm;
 using Elastic.Apm.Api;
+using System.Threading.Tasks;
 
 namespace ApiSamples
 {
@@ -17,45 +19,80 @@ namespace ApiSamples
 	/// </summary>
 	internal class Program
 	{
-		private static void Main(string[] args)
+		private static async Task Main(string[] args)
 		{
-			Environment.SetEnvironmentVariable("ELASTIC_APM_LOG_LEVEL", "Trace");
 
-			CompressionSample();
 
-			Console.ReadKey();
-
-			if (args.Length == 1) //in case it's started with arguments, parse DistributedTracingData from them
+			var l = new ActivityListener()
 			{
-				var distributedTracingData = DistributedTracingData.TryDeserializeFromString(args[0]);
-
-				WriteLineToConsole($"Callee process started - continuing trace with distributed tracing data: {distributedTracingData}");
-				var transaction2 = Agent.Tracer.StartTransaction("Transaction2", "TestTransaction", distributedTracingData);
-
-				try
+				ShouldListenTo = source => true,
+				Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
+				ActivityStarted = activity =>
 				{
-					transaction2.CaptureSpan("TestSpan", "TestSpanType", () => Thread.Sleep(200));
+					Console.WriteLine($"Started: {activity.DisplayName}, recorded: {activity.Recorded}");
 				}
-				finally
-				{
-					transaction2.End();
-				}
+			};
+			ActivitySource.AddActivityListener(l);
 
-				Thread.Sleep(TimeSpan.FromSeconds(11));
-				WriteLineToConsole("About to exit");
-			}
-			else
+
+			using (var activitySource = new ActivitySource("myTestApp"))
 			{
-				WriteLineToConsole("Started");
-				PassDistributedTracingData();
+				Console.WriteLine($"Has Listeners: {activitySource.HasListeners()}");
+				using (var activity = activitySource.StartActivity("foo", ActivityKind.Client))
+				{
+					//activity?.AddBaggage("synthetics.monitor.id", "123");
+					//activity?.AddBaggage("synthetics.monitor.id", "123");
+					Console.WriteLine($"{activity.DisplayName}, recorded: {activity.Recorded}");
 
-				//WIP: if the process terminates the agent
-				//potentially does not have time to send the transaction to the server.
-				Thread.Sleep(TimeSpan.FromSeconds(11));
+					var httpClient = new HttpClient();
 
-				WriteLineToConsole("About to exit - press any key...");
+				//	httpClient.DefaultRequestHeaders.Add("baggage", "synthetics.monitor.id=123");
+
+					httpClient.DefaultRequestHeaders.Add("baggage", "monitor.id:9d358ae2-34fc-4642-a735-d16eccd01acb;monitor.check_group:bd9662c7-b464-11ed-9e3b-0242ac110002");
+
+					await httpClient.GetAsync("http://localhost:3013/Home/Index");
+				}
+
 				Console.ReadKey();
 			}
+
+			// Environment.SetEnvironmentVariable("ELASTIC_APM_LOG_LEVEL", "Trace");
+			//
+			// CompressionSample();
+			//
+			// Console.ReadKey();
+			//
+			// if (args.Length == 1) //in case it's started with arguments, parse DistributedTracingData from them
+			// {
+			// 	var distributedTracingData = DistributedTracingData.TryDeserializeFromString(args[0]);
+			//
+			// 	WriteLineToConsole($"Callee process started - continuing trace with distributed tracing data: {distributedTracingData}");
+			// 	var transaction2 = Agent.Tracer.StartTransaction("Transaction2", "TestTransaction", distributedTracingData);
+			//
+			// 	try
+			// 	{
+			// 		transaction2.CaptureSpan("TestSpan", "TestSpanType", () => Thread.Sleep(200));
+			// 	}
+			// 	finally
+			// 	{
+			// 		transaction2.End();
+			// 	}
+			//
+			// 	Thread.Sleep(TimeSpan.FromSeconds(11));
+			// 	WriteLineToConsole("About to exit");
+			// }
+			// else
+			// {
+			// 	WriteLineToConsole("Started");
+			// 	PassDistributedTracingData();
+			//
+			// 	//WIP: if the process terminates the agent
+			// 	//potentially does not have time to send the transaction to the server.
+			// 	Thread.Sleep(TimeSpan.FromSeconds(11));
+			//
+			// 	WriteLineToConsole("About to exit - press any key...");
+			// 	Console.ReadKey();
+			// }
 		}
 
 		public static void CompressionSample()

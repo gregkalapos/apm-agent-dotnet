@@ -1,0 +1,31 @@
+@{
+	Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+	<title>title</title>
+</head>
+
+<script>
+const Http = new XMLHttpRequest();
+const url='http://localhost:3013/home/json';
+Http.open("GET", url);
+Http.send();
+Http.onreadystatechange=(e)=>{
+console.log(Http.responseText)
+}
+
+</script>
+<body>
+<div>
+	
+	<img src="/image/elastic-logo.svg" alt="apm"/>
+	
+	<br/>
+
+</div>
+</body>
+</html>

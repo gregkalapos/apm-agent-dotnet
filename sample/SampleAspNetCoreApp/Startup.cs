@@ -27,12 +27,20 @@ namespace SampleAspNetCoreApp
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
+			// services.AddOpenTelemetry()
+			// 	.ConfigureResource(builder => builder
+			// 		.AddService(serviceName: "OTel.NET Getting Started"))
+			// 	.WithTracing(builder => builder
+			// 		.AddAspNetCoreInstrumentation()
+			// 		.AddOtlpExporter( s => s.Endpoint = new Uri("http://localhost:8200")));
+
 			ConfigureServicesExceptMvc(services);
 			services.AddMvc();
 		}
 
 		public static void ConfigureServicesExceptMvc(IServiceCollection services)
 		{
+
 			const string connection = @"Data Source=blogging.db";
 			services.AddDbContext<SampleDataContext>
 				(options => options.UseSqlite(connection));
@@ -60,6 +68,7 @@ namespace SampleAspNetCoreApp
 		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 #endif
 		{
+
 			if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SKIP_AGENT_REGISTRATION")))
 				app.UseAllElasticApm(Configuration);
 

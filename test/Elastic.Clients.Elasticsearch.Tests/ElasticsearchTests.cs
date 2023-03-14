@@ -33,6 +33,7 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 			await IndexData();
 		});
 
+		//Thread.Sleep(30000);
 		payloadSender.Spans.Should().HaveCount(1);
 		payloadSender.FirstSpan.Name.Should().Be("Elasticsearch: PUT /{index}/_doc/{id}");
 		payloadSender.FirstSpan.Outcome.Should().Be(Outcome.Success);
@@ -47,7 +48,6 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 		payloadSender.FirstSpan.Otel.Attributes.Should().Contain(new KeyValuePair<string, string>("net.peer.name", _esClientListenerFixture.Container.Hostname));
 	}
 
-
 	[DockerFact]
 	public async Task GetDocumentTest()
 	{
@@ -61,6 +61,8 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 			await GetDocument();
 		});
 
+
+		Thread.Sleep(300000);
 		payloadSender.Spans.Should().HaveCount(1);
 		payloadSender.FirstSpan.Name.Should().Be("Elasticsearch: GET /{index}/_doc/{id}");
 		payloadSender.FirstSpan.Outcome.Should().Be(Outcome.Success);
@@ -88,6 +90,7 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 			await SearchDocument();
 		});
 
+		//Thread.Sleep(30000);
 		payloadSender.Spans.Should().HaveCount(1);
 		payloadSender.FirstSpan.Name.Should().Be("Elasticsearch: POST /{index}/_search");
 		payloadSender.FirstSpan.Outcome.Should().Be(Outcome.Success);
@@ -120,6 +123,7 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 			await UpdateDocument(tweet);
 		});
 
+		//Thread.Sleep(30000);
 		payloadSender.Spans.Should().HaveCount(1);
 
 		var updateSpan = payloadSender.FirstSpan;
@@ -150,6 +154,8 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 			await DeleteDocument();
 		});
 
+		Thread.Sleep(10000);
+
 		payloadSender.Spans.Should().HaveCount(1);
 		payloadSender.FirstSpan.Name.Should().Be("Elasticsearch: DELETE /{index}/_doc/{id}");
 		payloadSender.FirstSpan.Outcome.Should().Be(Outcome.Success);
@@ -167,20 +173,23 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 
 	private (MockPayloadSender, ApmAgent) SetUpAgent()
 	{
-		var payloadSender = new MockPayloadSender();
-		var agent = new ApmAgent(new TestAgentComponents(
-			new LineWriterToLoggerAdaptor(new XunitOutputToLineWriterAdaptor(_testOutputHelper)),
-			payloadSender: payloadSender, configuration: new MockConfiguration(openTelemetryBridgeEnabled: "true"),
-			apmServerInfo: MockApmServerInfo.Version80));
+		Environment.SetEnvironmentVariable("ELASTIC_APM_OPENTELEMETRY_BRIDGE_ENABLED", "true");
+		Agent.Setup(new AgentComponents());
+
+		 var payloadSender = new MockPayloadSender();
+		// var agent = new ApmAgent(new TestAgentComponents(
+		// 	new LineWriterToLoggerAdaptor(new XunitOutputToLineWriterAdaptor(_testOutputHelper)),
+		// 	/* payloadSender:payloadSender, */ configuration: new MockConfiguration(openTelemetryBridgeEnabled: "true"),
+		// 	apmServerInfo: MockApmServerInfo.Version80));
 
 		// Enable outgoing HTTP capturing and later assert that no HTTP span is captured for the es calls as defined in our spec.
-		agent.Subscribe(new HttpDiagnosticsSubscriber());
+		//agent.Subscribe(new HttpDiagnosticsSubscriber());
 
 		// `ElasticsearchDiagnosticsSubscriber` is for the old Elasticsearch client, in these tests with the new client it does not create any spans.
 		// Let's turn it on and make sure it doesn't cause any trouble with the new client.
-		agent.Subscribe(new ElasticsearchDiagnosticsSubscriber());
+		//agent.Subscribe(new ElasticsearchDiagnosticsSubscriber());
 
-		return (payloadSender, agent);
+		return (payloadSender, Agent.Instance);
 	}
 
 	private class Tweet

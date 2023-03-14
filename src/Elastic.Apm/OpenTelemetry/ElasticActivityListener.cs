@@ -171,7 +171,10 @@ namespace Elastic.Apm.OpenTelemetry
 							span.Otel.Attributes = new Dictionary<string, string>();
 
 						foreach (var tag in activity.Tags)
-							span.Otel.Attributes.Add(tag.Key, tag.Value);
+						{
+							if(!tag.Key.Contains("net") && !tag.Key.Contains("url"))
+								span.Otel.Attributes.Add(tag.Key, tag.Value);
+						}
 
 						InferSpanTypeAndSubType(span, activity);
 
@@ -214,29 +217,29 @@ namespace Elastic.Apm.OpenTelemetry
 
 		private static void InferSpanTypeAndSubType(Span span, Activity activity)
 		{
-			static string HttpPortFromScheme(string scheme)
-			{
-				return scheme switch
-				{
-					"http" => "80",
-					"https" => "443",
-					_ => string.Empty
-				};
-			}
-
-			// extracts 'host' or 'host:port' from URL
-			string ParseNetName(string url)
-			{
-				try
-				{
-					var u = new Uri(url); // https://developer.mozilla.org/en-US/docs/Web/API/URL
-					return u.Host + ':' + u.Port;
-				}
-				catch
-				{
-					return string.Empty;
-				}
-			}
+			// static string HttpPortFromScheme(string scheme)
+			// {
+			// 	return scheme switch
+			// 	{
+			// 		"http" => "80",
+			// 		"https" => "443",
+			// 		_ => string.Empty
+			// 	};
+			// }
+			//
+			// // extracts 'host' or 'host:port' from URL
+			// string ParseNetName(string url)
+			// {
+			// 	try
+			// 	{
+			// 		var u = new Uri(url); // https://developer.mozilla.org/en-US/docs/Web/API/URL
+			// 		return u.Host + ':' + u.Port;
+			// 	}
+			// 	catch
+			// 	{
+			// 		return string.Empty;
+			// 	}
+			// }
 
 			static string ToResourceName(string type, string name)
 			{
@@ -291,23 +294,23 @@ namespace Elastic.Apm.OpenTelemetry
 					: activity.Tags.FirstOrDefault(n => n.Key == "rpc.service").Value;
 				resource = serviceTargetName ?? span.Subtype;
 			}
-			else if (activity.Tags.Any(n => n.Key == "http.url" || n.Key == "http.scheme"))
-			{
-				span.Type = ApiConstants.TypeExternal;
-				span.Subtype = ApiConstants.SubtypeHttp;
-				serviceTargetType = span.Subtype;
-				if (activity.Tags.Any(n => n.Key == "http.host") && activity.Tags.Any(n => n.Key == "http.scheme"))
-				{
-					serviceTargetName = activity.Tags.FirstOrDefault(n => n.Key == "http.host").Value + ":"
-						+ HttpPortFromScheme(activity.Tags.FirstOrDefault(n => n.Key == "http.scheme").Value);
-				}
-				else if (activity.Tags.Any(n => n.Key == "http.url"))
-					serviceTargetName = ParseNetName(activity.Tags.FirstOrDefault(n => n.Key == "http.url").Value);
-				else
-					serviceTargetName = netName;
-
-				resource = serviceTargetName;
-			}
+			// else if (activity.Tags.Any(n => n.Key == "http.url" || n.Key == "http.scheme"))
+			// {
+			// 	span.Type = ApiConstants.TypeExternal;
+			// 	span.Subtype = ApiConstants.SubtypeHttp;
+			// 	serviceTargetType = span.Subtype;
+			// 	if (activity.Tags.Any(n => n.Key == "http.host") && activity.Tags.Any(n => n.Key == "http.scheme"))
+			// 	{
+			// 		serviceTargetName = activity.Tags.FirstOrDefault(n => n.Key == "http.host").Value + ":"
+			// 			+ HttpPortFromScheme(activity.Tags.FirstOrDefault(n => n.Key == "http.scheme").Value);
+			// 	}
+			// 	else if (activity.Tags.Any(n => n.Key == "http.url"))
+			// 		serviceTargetName = ParseNetName(activity.Tags.FirstOrDefault(n => n.Key == "http.url").Value);
+			// 	else
+			// 		serviceTargetName = netName;
+			//
+			// 	resource = serviceTargetName;
+			// }
 
 			if (serviceTargetType == null)
 			{

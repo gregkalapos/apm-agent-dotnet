@@ -27,6 +27,9 @@ namespace SampleAspNetCoreApp.Controllers
 {
 	public class HomeController : Controller
 	{
+#if NET7_0
+		private ActivitySource _activitySource = new ActivitySource("HomeController");
+#endif
 		public const string PostResponseBody = "somevalue";
 		private readonly SampleDataContext _sampleDataContext;
 
@@ -51,9 +54,9 @@ namespace SampleAspNetCoreApp.Controllers
 			SafeCaptureSpan<IActionResult>(GetCaptureControllerActionAsSpanFromQueryString(),
 				"Index_span_name", "Index_span_type", async () =>
 				{
-					var a = new Activity("foo").Start();
-					Thread.Sleep(100);
-					a.Stop();
+#if  NET7_0
+					MyOTelSampleMethod();
+#endif
 
 					_sampleDataContext.Database.Migrate();
 					var model = _sampleDataContext.SampleTable.Select(item => item.Name).ToList();
@@ -73,6 +76,17 @@ namespace SampleAspNetCoreApp.Controllers
 
 					return View(model);
 				});
+
+#if  NET7_0
+		public void MyOTelSampleMethod()
+		{
+			using (var _activity = _activitySource.StartActivity(ActivityKind.Client))
+			{
+
+				Thread.Sleep(100);
+			}
+		}
+#endif
 
 		/// <summary>
 		/// In order to test if relationship between spans is maintained correctly by the agent,
@@ -103,11 +117,19 @@ namespace SampleAspNetCoreApp.Controllers
 			});
 		}
 
+		public IActionResult Image() => View();
+
 		private static Task<T> SafeCaptureSpan<T>(bool captureControllerActionAsSpan, string spanName, string spanType, Func<Task<T>> spanBody)
 		{
 			if (!captureControllerActionAsSpan || Agent.Tracer.CurrentTransaction == null) return spanBody();
 
 			return (Agent.Tracer.CurrentSpan ?? (IExecutionSegment)Agent.Tracer.CurrentTransaction).CaptureSpan(spanName, spanType, spanBody);
+		}
+
+		public IActionResult Json()
+		{
+			var data = new { Name = "foo", Message = "bar", };
+			return Json(data);
 		}
 
 		public IActionResult SimplePage()

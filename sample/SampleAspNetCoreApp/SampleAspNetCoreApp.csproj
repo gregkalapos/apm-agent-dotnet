@@ -25,34 +25,42 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="5.0.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc6" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.0.0-rc6"/>
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.0.0-rc6" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.0"/>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.0"/>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.0"/>
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc6"/>
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.0.0-rc6"/>
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc6" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.0.0-rc6" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.0"/>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.0"/>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="7.0.0"/>
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc6"/>
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.0.0-rc6"/>
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="7.0.0" />
+<!--    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc6" />-->
+<!--    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.0.0-rc6" />-->
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+ 
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.5.0-alpha.1" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.5.0-alpha.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc9.14" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.0.0-rc9.14" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.0.0-beta.6" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2"/>
+    <Folder Include="Data\" />
+    <Folder Include="Data\HistoricalData" />
+    <Folder Include="Migrations" />
+    <Folder Include="wwwroot\image" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Data\"/>
-    <Folder Include="Data\HistoricalData"/>
-    <Folder Include="Migrations"/>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Elastic.Apm.NetCoreAll\Elastic.Apm.NetCoreAll.csproj"/>
+    <ProjectReference Include="..\..\src\Elastic.Apm.NetCoreAll\Elastic.Apm.NetCoreAll.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="Views\Home\Index.cshtml">
