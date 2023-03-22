@@ -66,7 +66,7 @@ namespace Elastic.Apm.Profiler.Managed.Tests
 			var processInfo = new ProcessStartInfo
 			{
 				FileName = "dotnet",
-				Arguments = $"publish -c Release -f {targetFramework} -o {outputDirectory} {msBuildProperties}",
+				Arguments = $"publish -c Release -f {targetFramework} --property:PublishDir={outputDirectory} {msBuildProperties}",
 				WorkingDirectory = _projectDirectory
 			};
 
@@ -136,7 +136,9 @@ namespace Elastic.Apm.Profiler.Managed.Tests
 			// use the .exe for net461
 			var arguments = targetFramework == "net461"
 				? new StartArguments(Path.Combine(workingDirectory, $"{_projectName}.exe"))
-				: useLocalhostHttp5000 ? new StartArguments("dotnet", $"{_projectName}.dll", "--urls", "http://localhost:5000") : new StartArguments("dotnet", $"{_projectName}.dll");
+				: useLocalhostHttp5000
+					? new StartArguments("dotnet", $"{_projectName}.dll", "--urls", "http://localhost:5000")
+					: new StartArguments("dotnet", $"{_projectName}.dll");
 
 			arguments.Environment = environmentVariables;
 			arguments.WorkingDirectory = workingDirectory;
@@ -144,7 +146,7 @@ namespace Elastic.Apm.Profiler.Managed.Tests
 			_process = new ObservableProcess(arguments);
 			_process.SubscribeLines(onNext ?? (_ => { }), onException ?? (_ => { }));
 
-			if(!doNotWaitForCompletion)
+			if (!doNotWaitForCompletion)
 				_process.WaitForCompletion(timeout);
 		}
 
