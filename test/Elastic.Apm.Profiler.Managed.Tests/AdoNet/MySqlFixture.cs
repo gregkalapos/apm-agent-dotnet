@@ -9,6 +9,7 @@ using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using Xunit;
 
+
 namespace Elastic.Apm.Profiler.Managed.Tests.AdoNet
 {
 	[CollectionDefinition("MySql")]
