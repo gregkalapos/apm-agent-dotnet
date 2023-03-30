@@ -29,6 +29,7 @@ namespace SampleAspNetCoreApp.Controllers
 	{
 		public const string PostResponseBody = "somevalue";
 		private readonly SampleDataContext _sampleDataContext;
+		private ActivitySource _activitySource = new ActivitySource("HomeController");
 
 		public HomeController(SampleDataContext sampleDataContext) => _sampleDataContext = sampleDataContext;
 
@@ -47,32 +48,34 @@ namespace SampleAspNetCoreApp.Controllers
 			return captureControllerActionAsSpanQueryStringValues.Count == 0 ? false : bool.Parse(captureControllerActionAsSpanQueryStringValues[0]);
 		}
 
-		public Task<IActionResult> Index() =>
-			SafeCaptureSpan<IActionResult>(GetCaptureControllerActionAsSpanFromQueryString(),
-				"Index_span_name", "Index_span_type", async () =>
-				{
-					var a = new Activity("foo").Start();
-					Thread.Sleep(100);
-					a.Stop();
 
-					_sampleDataContext.Database.Migrate();
-					var model = _sampleDataContext.SampleTable.Select(item => item.Name).ToList();
 
-					try
-					{
-						var httpClient = new HttpClient();
-						httpClient.DefaultRequestHeaders.Add("User-Agent", "APM-Sample-App");
-						var responseMsg = await httpClient.GetAsync("https://api.github.com/repos/elastic/apm-agent-dotnet");
-						var responseStr = await responseMsg.Content.ReadAsStringAsync();
-						ViewData["stargazers_count"] = JObject.Parse(responseStr)["stargazers_count"];
-					}
-					catch
-					{
-						Console.WriteLine("Failed HTTP GET elastic.co");
-					}
-
-					return View(model);
-				});
+		// public Task<IActionResult> Index() =>
+		// 	SafeCaptureSpan<IActionResult>(GetCaptureControllerActionAsSpanFromQueryString(),
+		// 		"Index_span_name", "Index_span_type", async () =>
+		// 		{
+		// 			var a = new Activity("foo").Start();
+		// 			Thread.Sleep(100);
+		// 			a.Stop();
+		//
+		// 			_sampleDataContext.Database.Migrate();
+		// 			var model = _sampleDataContext.SampleTable.Select(item => item.Name).ToList();
+		//
+		// 			try
+		// 			{
+		// 				var httpClient = new HttpClient();
+		// 				httpClient.DefaultRequestHeaders.Add("User-Agent", "APM-Sample-App");
+		// 				var responseMsg = await httpClient.GetAsync("https://api.github.com/repos/elastic/apm-agent-dotnet");
+		// 				var responseStr = await responseMsg.Content.ReadAsStringAsync();
+		// 				ViewData["stargazers_count"] = JObject.Parse(responseStr)["stargazers_count"];
+		// 			}
+		// 			catch
+		// 			{
+		// 				Console.WriteLine("Failed HTTP GET elastic.co");
+		// 			}
+		//
+		// 			return View(model);
+		// 		});
 
 		/// <summary>
 		/// In order to test if relationship between spans is maintained correctly by the agent,
