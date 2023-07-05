@@ -3,8 +3,6 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
-using System.Runtime.CompilerServices;
-
 namespace Elastic.Apm.Config
 {
 	/// <summary>
@@ -16,19 +14,10 @@ namespace Elastic.Apm.Config
 	}
 
 	/// <summary>
-	/// A description for the configuration snapshot
+	/// A description for the configuration
 	/// </summary>
-	internal interface IConfigurationSnapshotDescription
+	public interface IConfigurationDescription
 	{
 		public string Description { get; }
-	}
-
-	internal static class ConfigurationSnapshotExtensions
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static string Description(this IConfiguration snapshot) =>
-			snapshot is IConfigurationSnapshotDescription snapshotWithDescription
-				? snapshotWithDescription.Description
-				: null;
 	}
 }

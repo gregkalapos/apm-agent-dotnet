@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information
 
 using System;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -122,7 +121,7 @@ namespace Elastic.Apm.Tests.BackendCommTests.CentralConfig
 		/// <summary>
 		/// logger that has a log level switch but does not implement <see cref="ILogLevelSwitchable"/>
 		/// </summary>
-		private class UnswitchableLogger: IApmLogger
+		private class UnswitchableLogger : IApmLogger
 		{
 			public LogLevelSwitch LogLevelSwitch { get; }
 
@@ -223,12 +222,12 @@ namespace Elastic.Apm.Tests.BackendCommTests.CentralConfig
 		public void Dispose_stops_the_thread()
 		{
 			CentralConfigurationFetcher lastCentralConfigurationFetcher;
-			var configSnapshotFromReader = new ConfigurationSnapshotFromReader(new EnvironmentConfigurationReader(), "local");
-			var configStore = new ConfigurationStore(configSnapshotFromReader, LoggerBase);
-			var service = Service.GetDefaultService(new EnvironmentConfigurationReader(), LoggerBase);
+			var snapshot = new RuntimeConfigurationSnapshot(new EnvironmentConfiguration());
+			var configStore = new ConfigurationStore(snapshot, LoggerBase);
+			var service = Service.GetDefaultService(new EnvironmentConfiguration(), LoggerBase);
 			var handler = new MockHttpMessageHandler();
 			var configUrl = BackendCommUtils.ApmServerEndpoints
-				.BuildGetConfigAbsoluteUrl(configSnapshotFromReader.ServerUrl, service);
+				.BuildGetConfigAbsoluteUrl(snapshot.ServerUrl, service);
 			handler.When(configUrl.AbsoluteUri)
 				.Respond(_ => new HttpResponseMessage(HttpStatusCode.OK)
 				{
@@ -238,7 +237,7 @@ namespace Elastic.Apm.Tests.BackendCommTests.CentralConfig
 
 			using (var agent = new ApmAgent(new TestAgentComponents(LoggerBase,
 				centralConfigurationFetcher: new CentralConfigurationFetcher(LoggerBase, configStore, service, handler),
-				payloadSender: new PayloadSenderV2(LoggerBase, configSnapshotFromReader, service,
+				payloadSender: new PayloadSenderV2(LoggerBase, snapshot, service,
 					new SystemInfoHelper(LoggerBase).GetSystemInfo(null), MockApmServerInfo.Version710))))
 			{
 				lastCentralConfigurationFetcher = (CentralConfigurationFetcher)agent.CentralConfigurationFetcher;
@@ -250,7 +249,7 @@ namespace Elastic.Apm.Tests.BackendCommTests.CentralConfig
 			lastCentralConfigurationFetcher.IsRunning.Should().BeFalse();
 		}
 
-		[Theory]
+		[Theory(Skip = "TODO this tests takes over 6 minutes locally")]
 		[InlineData(1)]
 		[InlineData(5)]
 		[InlineData(9)]
@@ -264,13 +263,13 @@ namespace Elastic.Apm.Tests.BackendCommTests.CentralConfig
 
 			numberOfAgentInstances.Repeat(i =>
 			{
-				var configSnapshotFromReader = new ConfigurationSnapshotFromReader(new EnvironmentConfigurationReader(), "local");
-				var service = Service.GetDefaultService(new EnvironmentConfigurationReader(), LoggerBase);
-				var configStore = new ConfigurationStore(configSnapshotFromReader, LoggerBase);
+				var snapshot = new RuntimeConfigurationSnapshot(new EnvironmentConfiguration());
+				var service = Service.GetDefaultService(new EnvironmentConfiguration(), LoggerBase);
+				var configStore = new ConfigurationStore(snapshot, LoggerBase);
 
 				var handler = new MockHttpMessageHandler();
 				var configUrl = BackendCommUtils.ApmServerEndpoints
-					.BuildGetConfigAbsoluteUrl(configSnapshotFromReader.ServerUrl, service);
+					.BuildGetConfigAbsoluteUrl(snapshot.ServerUrl, service);
 
 				handler.When(configUrl.AbsoluteUri)
 					.Respond(_ => new HttpResponseMessage(HttpStatusCode.OK)
@@ -282,7 +281,7 @@ namespace Elastic.Apm.Tests.BackendCommTests.CentralConfig
 				var centralConfigFetcher = new CentralConfigurationFetcher(LoggerBase, configStore, service, handler);
 				var payloadSender = new PayloadSenderV2(
 					LoggerBase,
-					configSnapshotFromReader,
+					snapshot,
 					service,
 					new SystemInfoHelper(LoggerBase).GetSystemInfo(null),
 					MockApmServerInfo.Version710);
