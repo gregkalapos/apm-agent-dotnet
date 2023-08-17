@@ -11,9 +11,16 @@ using Elastic.Apm.Logging;
 namespace Elastic.Apm.Config
 {
 
+	/// <summary> Implements the dynamic lookup of a configuration option </summary>
 	public interface IConfigurationLookup
 	{
 		ConfigurationKeyValue Lookup(ConfigurationOption option);
+	}
+
+	/// <summary> A description for the configuration </summary>
+	public interface IConfigurationDescription
+	{
+		public string Description { get; }
 	}
 
 	/// <summary>
@@ -33,6 +40,13 @@ namespace Elastic.Apm.Config
 		/// This suppresses any configuration of <see cref="ExcludedNamespaces" />
 		/// </summary>
 		IReadOnlyCollection<string> ApplicationNamespaces { get; }
+
+		/// <summary>
+		/// Controls which baggage values are automatically attached to the given event (transactions, spans, errors). Baggage values are derived from the `baggage` header defined in
+		/// https://www.w3.org/TR/baggage/.
+		/// You can programmatically write and read baggage values via the Activity API.
+		/// </summary>
+		IReadOnlyList<WildcardMatcher> BaggageToAttach { get; }
 
 		/// <summary>
 		/// For transactions that are HTTP requests, the agent can optionally capture the request body, e.g., POST variables.

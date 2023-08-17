@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Elastic.Apm.Api;
 using Elastic.Apm.Helpers;
 using Elastic.Apm.Logging;
@@ -22,30 +23,10 @@ namespace Elastic.Apm.StackExchange.Redis
 	/// </summary>
 	public class ElasticApmProfiler
 	{
-		private readonly ConcurrentDictionary<string, ProfilingSession> _executionSegmentSessions =
-			new ConcurrentDictionary<string, ProfilingSession>();
+		private readonly ConditionalWeakTable<IExecutionSegment, ProfilingSession> _executionSegmentSessions = new();
 
 		private readonly Lazy<IApmLogger> _logger;
 		private readonly Lazy<IApmAgent> _agent;
-		private static readonly Func<object, object> MessageFetcher;
-		private static readonly Func<object, object> CommandAndKeyFetcher;
-		private static readonly Type _profiledCommandType;
-
-		static ElasticApmProfiler()
-		{
-			var messageType = Type.GetType("StackExchange.Redis.Message,StackExchange.Redis", false);
-			_profiledCommandType = Type.GetType("StackExchange.Redis.Profiling.ProfiledCommand,StackExchange.Redis", false);
-			if (messageType != null && _profiledCommandType != null)
-			{
-				var commandAndKey = messageType.GetProperty("CommandAndKey", BindingFlags.Public | BindingFlags.Instance);
-				var messageProperty = _profiledCommandType.GetField("Message", BindingFlags.NonPublic | BindingFlags.Instance);
-				if (commandAndKey != null && messageProperty != null)
-				{
-					MessageFetcher = ExpressionBuilder.BuildFieldGetter(_profiledCommandType, messageProperty);
-					CommandAndKeyFetcher = ExpressionBuilder.BuildPropertyGetter(messageType, commandAndKey);
-				}
-			}
-		}
 
 		public ElasticApmProfiler(Func<IApmAgent> agentGetter)
 		{
@@ -79,26 +60,20 @@ namespace Elastic.Apm.StackExchange.Redis
 			}
 
 			var isSpan = realSpan != null;
-			if (!_executionSegmentSessions.TryGetValue(executionSegment.Id, out var session))
-			{
-				_logger.Value.Trace()?.Log("Creating profiling session for {ExecutionSegment} {Id}",
-					isSpan ? "span" : "transaction",
-					executionSegment.Id);
+			if (_executionSegmentSessions.TryGetValue(executionSegment, out var session))
+				return session;
 
-				session = new ProfilingSession();
+			_logger.Value.Trace()?.Log("Creating profiling session for {ExecutionSegment} {Id}",
+				isSpan ? "span" : "transaction", executionSegment.Id);
 
-				if (!_executionSegmentSessions.TryAdd(executionSegment.Id, session))
-				{
-					_logger.Value.Debug()?.Log("could not add profiling session to tracked sessions for {ExecutionSegment} {Id}",
-						isSpan ? "span" : "transaction",
-						executionSegment.Id);
-				}
+			session = new ProfilingSession();
 
-				if (isSpan)
-					realSpan.Ended += (sender, _) => EndProfilingSession(sender, session);
-				else
-					realTransaction.Ended += (sender, _) => EndProfilingSession(sender, session);
-			}
+			_executionSegmentSessions.Add(executionSegment, session);
+
+			if (isSpan)
+				realSpan.Ended += (sender, _) => EndProfilingSession(sender, session);
+			else
+				realTransaction.Ended += (sender, _) => EndProfilingSession(sender, session);
 
 			return session;
 		}
@@ -122,7 +97,7 @@ namespace Elastic.Apm.StackExchange.Redis
 			{
 				// Remove the session. Use session passed to EndProfilingSession rather than the removed session in the event
 				// there was an issue in adding or removing the session
-				if (!_executionSegmentSessions.TryRemove(executionSegment.Id, out _))
+				if (!_executionSegmentSessions.Remove(executionSegment))
 				{
 					_logger.Value.Debug()?.Log(
 						"could not remove profiling session from tracked sessions for {ExecutionSegment} {Id}",
@@ -148,6 +123,7 @@ namespace Elastic.Apm.StackExchange.Redis
 					segmentType, executionSegment.Id);
 			}
 		}
+
 		private static void ProcessCommand(IProfiledCommand profiledCommand, IExecutionSegment executionSegment)
 		{
 			var name = GetCommand(profiledCommand);
@@ -161,8 +137,6 @@ namespace Elastic.Apm.StackExchange.Redis
 			{
 				span.Context.Db = new Database
 				{
-					Instance = profiledCommand.Db.ToString(CultureInfo.InvariantCulture),
-					Statement = GetCommandAndKey(profiledCommand) ?? name,
 					Type = ApiConstants.SubTypeRedis
 				};
 
@@ -192,9 +166,10 @@ namespace Elastic.Apm.StackExchange.Redis
 				// profiled commands are always successful
 				span.Outcome = Outcome.Success;
 
+				// https://github.com/elastic/apm-agent-dotnet/issues/2107
 				// TODO: clear the raw stacktrace as it won't be representative of the call stack at
 				// the point at which the call to redis happens, and therefore misleading to include
-			}, ApiConstants.SubTypeRedis, "query", true);
+			}, ApiConstants.SubTypeRedis, ApiConstants.ActionQuery, true);
 		}
 
 		private static string GetCommand(IProfiledCommand profiledCommand) =>
@@ -202,13 +177,5 @@ namespace Elastic.Apm.StackExchange.Redis
 				? profiledCommand.Command
 				: "UNKNOWN";
 
-		private static string GetCommandAndKey(IProfiledCommand profiledCommand)
-		{
-			if (profiledCommand.GetType() != _profiledCommandType || MessageFetcher == null)
-				return null;
-
-			var message = MessageFetcher.Invoke(profiledCommand);
-			return CommandAndKeyFetcher.Invoke(message) as string;
-		}
 	}
 }

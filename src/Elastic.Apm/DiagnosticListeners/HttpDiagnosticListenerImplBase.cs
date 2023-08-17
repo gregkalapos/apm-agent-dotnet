@@ -6,7 +6,10 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
+using System.Text;
 using Elastic.Apm.Api;
 using Elastic.Apm.DistributedTracing;
 using Elastic.Apm.Helpers;
@@ -26,6 +29,8 @@ namespace Elastic.Apm.DiagnosticListeners
 		private const string EventExceptionPropertyName = "Exception";
 		protected const string EventRequestPropertyName = "Request";
 		private const string EventResponsePropertyName = "Response";
+
+		private const string BaggageHeaderName = "baggage";
 
 		/// <summary>
 		/// Keeps track of ongoing requests
@@ -239,6 +244,19 @@ namespace Elastic.Apm.DiagnosticListeners
 			if (!RequestHeadersContain(request, TraceContext.TraceStateHeaderName) && span.OutgoingDistributedTracingData != null
 				&& span.OutgoingDistributedTracingData.HasTraceState)
 				RequestHeadersAdd(request, TraceContext.TraceStateHeaderName, span.OutgoingDistributedTracingData.TraceState.ToTextHeader());
+
+			if (!RequestHeadersContain(request, BaggageHeaderName) && Activity.Current != null && Activity.Current.Baggage.Any())
+			{
+				var sb = new StringBuilder();
+
+				foreach (var item in Activity.Current.Baggage)
+				{
+					if (sb.Length > 0)
+						sb.Append(",");
+					sb.Append($"{item.Key}={item.Value}");
+				}
+				RequestHeadersAdd(request, BaggageHeaderName, sb.ToString());
+			}
 		}
 
 		private void ProcessStopEvent(object eventValue, TRequest request, Uri requestUrl)
@@ -316,6 +334,6 @@ namespace Elastic.Apm.DiagnosticListeners
 		/// </summary>
 		/// <returns><c>true</c>, if request should not be captured, <c>false</c> otherwise.</returns>
 		/// <param name="requestUri">Request URI. It cannot be null</param>
-		private bool IsRequestFilteredOut(Uri requestUri) => ApmAgent.ConfigurationReader.ServerUrl.IsBaseOf(requestUri);
+		private bool IsRequestFilteredOut(Uri requestUri) => ApmAgent.Configuration.ServerUrl.IsBaseOf(requestUri);
 	}
 }
