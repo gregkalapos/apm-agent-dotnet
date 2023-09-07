@@ -76,7 +76,7 @@ namespace Elastic.Apm.AspNetFullFramework
 
 		internal static AgentComponents CreateAgentComponents(string debugName)
 		{
-			var logger = AgentDependencies.Logger ?? FullFrameworkDefaultImplementations.CreateDefaultLogger();
+			var logger = AgentDependencies.Logger ?? FullFrameworkDefaultImplementations.CreateDefaultLogger(null);
 
 			var config = FullFrameworkDefaultImplementations.CreateConfigurationReaderFromConfiguredType(logger)
 				?? new ElasticApmModuleConfiguration(logger);
@@ -486,7 +486,7 @@ namespace Elastic.Apm.AspNetFullFramework
 
 				_isCaptureHeadersEnabled = Agent.Instance.Configuration.CaptureHeaders;
 
-				Agent.Instance.Subscribe(new HttpDiagnosticsSubscriber());
+				Agent.Instance.SubscribeIncludingAllDefaults();
 			}) ?? false;
 
 		/// <summary>
