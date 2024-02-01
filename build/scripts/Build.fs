@@ -202,7 +202,7 @@ module Build =
         //dotnet dotnet-format --exclude src/Elastic.Apm/Libraries/
         DotNet.Exec ["dotnet-format"; "--check"; "--exclude"; "src/Elastic.Apm/Libraries/"]
             
-    let private copyDllsAndPdbs (destination: DirectoryInfo) (source: DirectoryInfo) =        
+    let private copyDllsAndPdbs (destination: DirectoryInfo) (source: DirectoryInfo) =
         source.GetFiles()
         |> Seq.filter (fun file -> file.Extension = ".dll" || file.Extension = ".pdb")
         |> Seq.iter (fun file -> file.CopyTo(Path.combine destination.FullName file.Name, true) |> ignore)
@@ -214,11 +214,11 @@ module Build =
         let versionedName =
             sprintf "%s_%s" name (currentAssemblyVersion.ToString())
                 
-        let agentDir = Paths.BuildOutput name |> DirectoryInfo                    
+        let agentDir = Paths.BuildOutput name |> DirectoryInfo
         agentDir.Create()
 
         // copy startup hook to root of agent directory
-        !! (Paths.BuildOutput "ElasticApmAgentStartupHook/netcoreapp2.2")
+        !! (Paths.BuildOutput "ElasticApmAgentStartupHook/netstandard2.0")
         |> Seq.filter Path.isDirectory
         |> Seq.map DirectoryInfo
         |> Seq.iter (copyDllsAndPdbs agentDir)
@@ -231,14 +231,14 @@ module Build =
         |> Seq.iter (copyDllsAndPdbs (agentDir.CreateSubdirectory(sprintf "%i.0.0" getCurrentApmDiagnosticSourceVersion.Major)))
                  
         // assemblies compiled against older version of System.Diagnostics.DiagnosticSource 
-        !! (Paths.BuildOutput (sprintf "Elastic.Apm.StartupHook.Loader_%i.0.0/netcoreapp2.2" oldDiagnosticSourceVersion.Major))
+        !! (Paths.BuildOutput (sprintf "Elastic.Apm.StartupHook.Loader_%i.0.0/netstandard2.0" oldDiagnosticSourceVersion.Major))
         ++ (Paths.BuildOutput (sprintf "Elastic.Apm_%i.0.0/netstandard2.0" oldDiagnosticSourceVersion.Major))
         |> Seq.filter Path.isDirectory
         |> Seq.map DirectoryInfo
         |> Seq.iter (copyDllsAndPdbs (agentDir.CreateSubdirectory(sprintf "%i.0.0" oldDiagnosticSourceVersion.Major)))
         
         // assemblies compiled against 6.0 version of System.Diagnostics.DiagnosticSource 
-        !! (Paths.BuildOutput (sprintf "Elastic.Apm.StartupHook.Loader_%i.0.0/netcoreapp2.2" oldDiagnosticSourceVersion.Major)) //using old version here, because it the netcoreapp2.2 app can't build with diagnosticsource6
+        !! (Paths.BuildOutput (sprintf "Elastic.Apm.StartupHook.Loader_%i.0.0/netstandard2.0" oldDiagnosticSourceVersion.Major)) //using old version here, because it the netcoreapp2.2 app can't build with diagnosticsource6
         ++ (Paths.BuildOutput (sprintf "Elastic.Apm_%i.0.0/net6.0" diagnosticSourceVersion6.Major))
         |> Seq.filter Path.isDirectory
         |> Seq.map DirectoryInfo

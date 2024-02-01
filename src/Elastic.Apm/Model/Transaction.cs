@@ -347,8 +347,10 @@ internal class Transaction : ITransaction
 			if (!WildcardMatcher.IsAnyMatch(Configuration.BaggageToAttach, baggage.Key))
 				continue;
 
-			Otel ??= new OTel() { Attributes = new Dictionary<string, object>() };
-			Otel.Attributes.Add(baggage.Key, baggage.Value);
+			Otel ??= new OTel { Attributes = new Dictionary<string, object>() };
+
+			var newKey = $"baggage.{baggage.Key}";
+			Otel.Attributes[newKey] = baggage.Value;
 		}
 	}
 
@@ -575,7 +577,7 @@ internal class Transaction : ITransaction
 					new DroppedSpanStats.DroppedSpanDuration { Sum = new DroppedSpanStats.DroppedSpanDuration.DroppedSpanDurationSum() };
 
 				item.Duration.Count++;
-				item.Duration.Sum.Us += duration;
+				item.Duration.Sum.UsRaw += duration;
 			}
 			else
 			{

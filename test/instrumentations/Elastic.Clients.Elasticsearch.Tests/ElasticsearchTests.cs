@@ -3,12 +3,15 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using DotNet.Testcontainers;
+using DotNet.Testcontainers.Configurations;
 using Elastic.Apm;
 using Elastic.Apm.Api;
+using Elastic.Apm.AspNetCore.Tests;
 using Elastic.Apm.DiagnosticSource;
 using Elastic.Apm.Elasticsearch;
 using Elastic.Apm.Tests.Utilities;
-using Elastic.Apm.Tests.Utilities.XUnit;
+using Elastic.Apm.Tests.Utilities.Docker;
 using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
@@ -21,6 +24,7 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 	private readonly ElasticsearchTestFixture _esClientListenerFixture;
 	private readonly ElasticsearchClient _client;
 
+
 	public ElasticsearchTests(ITestOutputHelper testOutputHelper, ElasticsearchTestFixture esClientListenerFixture)
 	{
 		_testOutputHelper = testOutputHelper;
@@ -28,7 +32,7 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 		_client = _esClientListenerFixture.Client ?? throw new Exception("ElasticsearchClient is `null`");
 	}
 
-	[DisabledOnWindowsGitHubActionsDockerFact]
+	[DockerFact]
 	public async Task IndexDataTest()
 	{
 		var (payloadSender, apmAgent) = SetUpAgent();
@@ -52,7 +56,8 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 		elasticsearchSpan.Otel.Attributes.Should().Contain(new KeyValuePair<string, object>("net.peer.name", _esClientListenerFixture.Container.Hostname));
 	}
 
-	[DisabledOnWindowsGitHubActionsDockerFact]
+
+	[DockerFact]
 	public async Task GetDocumentTest()
 	{
 		// make sure data is present
@@ -79,7 +84,7 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 		elasticsearchSpan.Otel.Attributes.Should().Contain(new KeyValuePair<string, object>("net.peer.name", _esClientListenerFixture.Container.Hostname));
 	}
 
-	[DisabledOnWindowsGitHubActionsDockerFact]
+	[DockerFact]
 	public async Task SearchDocumentTest()
 	{
 		// make sure data is present
@@ -106,7 +111,7 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 		elasticsearchSpan.Otel.Attributes.Should().Contain(new KeyValuePair<string, object>("net.peer.name", _esClientListenerFixture.Container.Hostname));
 	}
 
-	[DisabledOnWindowsGitHubActionsDockerFact]
+	[DockerFact]
 	public async Task UpdateDocumentTest()
 	{
 		// make sure data is present
@@ -143,7 +148,7 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 		elasticsearchSpan.Otel.Attributes.Should().Contain(new KeyValuePair<string, object>("net.peer.name", _esClientListenerFixture.Container.Hostname));
 	}
 
-	[DisabledOnWindowsGitHubActionsDockerFact]
+	[DockerFact]
 	public async Task DeleteDocumentTest()
 	{
 		// make sure data is present
@@ -208,14 +213,14 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 
 		var response = await _client.IndexAsync(tweet, request => request.Index("my-tweet-index"));
 
-		response.IsSuccess().Should().BeTrue();
+		response.IsSuccess().Should().BeTrue("{0}", response.DebugInformation);
 	}
 
 	private async Task GetDocumentAsync()
 	{
 		var response = await _client.GetAsync<Tweet>(1, idx => idx.Index("my-tweet-index"));
 
-		response.IsSuccess().Should().BeTrue();
+		response.IsSuccess().Should().BeTrue("{0}", response.DebugInformation);
 		var tweet = response.Source;
 		tweet.Should().NotBeNull();
 	}
@@ -241,14 +246,14 @@ public class ElasticsearchTests : IClassFixture<ElasticsearchTestFixture>
 	private async Task UpdateDocumentAsync(Tweet tweet)
 	{
 		tweet.Message = "This is a new message";
-		var response2 = await _client.UpdateAsync<Tweet, object>("my-tweet-index", 1, u => u
+		var response = await _client.UpdateAsync<Tweet, object>("my-tweet-index", 1, u => u
 			.Doc(tweet));
-		response2.IsValidResponse.Should().BeTrue();
+		response.IsValidResponse.Should().BeTrue("{0}", response.DebugInformation);
 	}
 
 	private async Task DeleteDocumentAsync()
 	{
 		var response = await _client.DeleteAsync("my-tweet-index", 1);
-		response.IsValidResponse.Should().BeTrue();
+		response.IsValidResponse.Should().BeTrue("{0}", response.DebugInformation);
 	}
 }
